@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;700&family=Playball&family=Lora:ital@1&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💍</text></svg>">
+
+    <title>A Promise for Aru</title>
+
+    <style>
+        :root {
+            --color-fondo-gradiente-1: #fff5f7;
+            --color-fondo-gradiente-2: #f8cdda;
+            --color-sobre-cuerpo: #fff5f7;
+            --color-sobre-solapa: #f8cdda;
+            --color-sobre-solapa-superior: #ffe4e1;
+            --color-carta: #ffffff;
+            --color-sello: #ff4d6d;
+            --color-texto: #333333;
+            --color-firma: #d90429;
+            --fuente-titulo: 'Playball', cursive;
+            --fuente-fecha: 'Lora', serif;
+            --fuente-saludo: 'Playball', cursive;
+            --fuente-cuerpo: 'Dancing Script', cursive;
+            --duracion-apertura: 1.5s;
+        }
+
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffffff; display: flex; justify-content: center; align-items: center;
+            flex-direction: column; z-index: 1000; transition: opacity 0.7s ease, visibility 0.7s ease;
+        }
+        #loader.hidden { opacity: 0; visibility: hidden; }
+
+        body {
+            margin: 0; padding: 20px; box-sizing: border-box;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--color-fondo-gradiente-1) 0%, var(--color-fondo-gradiente-2) 100%);
+            overflow: hidden;
+            -webkit-user-select: none; user-select: none;
+        }
+
+        h1 {
+            font-family: var(--fuente-titulo); font-size: clamp(1.8rem, 6vw, 2.8rem);
+            color: #ff4d6d; text-align: center; margin-bottom: 20px;
+        }
+
+        .contenedor { perspective: 1500px; }
+        .envoltura-sobre {
+            position: relative; width: 280px; height: 180px;
+            cursor: pointer; filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.1));
+            animation: latido 2.5s infinite;
+        }
+        @keyframes latido { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+        .sobre { position: absolute; width: 100%; height: 100%; background: var(--color-sobre-cuerpo); border-radius: 8px; z-index: 2; }
+        .solapa { position: absolute; transition: transform 0.7s ease; }
+        .solapa-superior { top: 0; left: 0; width: 100%; height: 55%; background: var(--color-sobre-solapa-superior); clip-path: polygon(0 0, 100% 0, 50% 100%); z-index: 6; transform-origin: top; }
+        .solapa-izquierda { top: 0; left: 0; width: 52%; height: 100%; background: var(--color-sobre-solapa); clip-path: polygon(0 0, 100% 50%, 0 100%); z-index: 5; }
+        .solapa-derecha { top: 0; right: 0; width: 52%; height: 100%; background: var(--color-sobre-solapa); clip-path: polygon(100% 0, 0 50%, 100% 100%); z-index: 5; }
+        .corazon { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; background: var(--color-sello); transform: translate(-50%, -70%) rotate(45deg); z-index: 10; transition: 0.3s; }
+        .corazon::before, .corazon::after { content: ''; position: absolute; width: 30px; height: 30px; background: inherit; border-radius: 50%; }
+        .corazon::before { top: -15px; left: 0; } .corazon::after { top: 0; left: -15px; }
+
+        .carta {
+            position: fixed; top: 50%; left: 50%;
+            width: 280px; height: 160px;
+            transform: translate(-50%, -40%);
+            opacity: 0; z-index: 1; pointer-events: none;
+            background: var(--color-carta);
+            padding: 25px; box-sizing: border-box;
+            border-radius: 5px; box-shadow: 0 5px 30px rgba(0,0,0,0.1);
+        }
+        
+        .envoltura-sobre.abierto .carta {
+            animation: openLetter var(--duracion-apertura) 0.7s forwards;
+            pointer-events: auto;
+        }
+
+        @keyframes openLetter {
+            0% { opacity: 0; transform: translate(-50%, -40%) scale(0.8); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); width: 92vw; height: 80vh; max-width: 500px; z-index: 30; }
+        }
+
+        .envoltura-sobre.abierto .solapa-superior { transform: rotateX(180deg); z-index: 0; }
+        .envoltura-sobre.abierto .corazon { opacity: 0; }
+
+        .contenido { overflow-y: auto; height: 100%; padding-right: 5px; text-align: left; }
+        
+        /* Font Size Adjustments */
+        .fecha { display: block; text-align: right; font-family: var(--fuente-fecha); color: #999; font-size: 0.95rem; margin-bottom: 5px; }
+        .saludo { font-family: var(--fuente-saludo); font-size: 1.8rem; color: #ff4d6d; margin: 8px 0; }
+        .cuerpo { font-family: var(--fuente-cuerpo); font-size: 1.25rem; line-height: 1.4; color: var(--color-texto); font-weight: 500; }
+        .firma { font-family: var(--fuente-saludo); font-size: 1.6rem; text-align: right; color: var(--color-firma); margin-top: 20px; }
+
+        .floating { position: fixed; pointer-events: none; z-index: 99; animation: floatUp 4s linear forwards; }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-100vh) scale(0.5); opacity: 0; } }
+
+        @media (max-width: 480px) {
+            .saludo { font-size: 1.6rem; }
+            .cuerpo { font-size: 1.15rem; }
+            .firma { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader">
+        <div style="font-size: 40px;">🤝🏻</div>
+        <p style="font-family: 'Lora'; color: #888; font-size: 0.9rem;">Writing your promise...</p>
+    </div>
+
+    <h1>Happy Promise Day</h1>
+
+    <div class="contenedor">
+        <div class="envoltura-sobre" id="envelope" onclick="handleOpen()">
+            <div class="sobre"></div>
+            <div class="solapa solapa-superior"></div>
+            <div class="solapa solapa-derecha"></div>
+            <div class="solapa solapa-izquierda"></div>
+            <div class="corazon"></div>
+            <div class="carta">
+                <div class="contenido">
+                    <span class="fecha" id="text-fecha"></span>
+                    <p class="saludo" id="text-saludo"></p>
+                    <p class="cuerpo" id="text-cuerpo"></p>
+                    <p class="firma" id="text-firma"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <audio id="sound" src="https://dl.dropboxusercontent.com/scl/fi/esct592hxwzjyf9a2egpc/Si-supieras-lo-que-siento-con-mirarte....mp3?rlkey=xqbaohnpyd7b3mejkvvdg6dlq&dl=1"></audio>
+
+    <script>
+        const textFecha = "February 11, 2026";
+        const textSaludo = "Hey Aru,";
+        const textCuerpo = "On this special day, I don't just want to make a promise; I want to give you my word. \n\nI promise to be your shoulder to lean on, your strength when you feel weak, and your biggest fan in everything you do. I promise to hold your hand through every storm. \n\nYou are my today and all of my tomorrows.";
+        const textFirma = "Forever Yours,\nPronoy";
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+            }, 1000);
+        });
+
+        let isTyping = false;
+
+        function handleOpen() {
+            const envelope = document.getElementById('envelope');
+            const sound = document.getElementById('sound');
+            
+            if(!envelope.classList.contains('abierto')) {
+                envelope.classList.add('abierto');
+                sound.play().catch(() => {});
+                
+                setTimeout(() => {
+                    if(!isTyping) {
+                        isTyping = true;
+                        typeWriter('text-fecha', textFecha, 50, () => {
+                            typeWriter('text-saludo', textSaludo, 60, () => {
+                                typeWriter('text-cuerpo', textCuerpo, 30, () => {
+                                    typeWriter('text-firma', textFirma, 60);
+                                });
+                            });
+                        });
+                    }
+                }, 1800);
+
+                setInterval(createFloating, 400);
+            }
+        }
+
+        function typeWriter(id, text, speed, callback) {
+            let i = 0;
+            const element = document.getElementById(id);
+            element.innerHTML = "";
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                } else if (callback) {
+                    callback();
+                }
+            }
+            type();
+        }
+
+        function createFloating() {
+            const icons = ['❤️', '💍', '🌹', '💖', '✨'];
+            const icon = document.createElement('div');
+            icon.className = 'floating';
+            icon.innerHTML = icons[Math.floor(Math.random() * icons.length)];
+            icon.style.left = Math.random() * 100 + 'vw';
+            icon.style.top = '90vh';
+            icon.style.fontSize = (Math.random() * 15 + 15) + 'px';
+            document.body.appendChild(icon);
+            setTimeout(() => icon.remove(), 4000);
+        }
+    </script>
+</body>
+</html>
